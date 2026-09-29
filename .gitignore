@@ -1,0 +1,40 @@
+# Python Virtual Environments
+.venv/
+venv/
+env/
+
+# Python Cache and Bytecode
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# macOS
+.DS_Store
+
+# Secrets and Local Environment Files
+.env
+.env.*
+!.env.example
+
+# Large Dataset Directory
+Dataset/
+
+# Packet Captures
+*.pcap
+*.pcapng
+*.cap
+
+!test_pcaps/
+
+# Runtime and Output Files
+outputs/
+*.log
+
+# IDE Files
+.vscode/
+.idea/
+

@@ -1,0 +1,77 @@
+2026-08-11 13:12:23,083 | zyder.evaluate | INFO | Loading saved model and preprocessing data...
+2026-08-11 13:12:23,180 | zyder.preprocessing | INFO | ============================================================
+2026-08-11 13:12:23,180 | zyder.preprocessing | INFO | Preprocessing unsw dataset (mode=native)
+2026-08-11 13:12:23,180 | zyder.preprocessing | INFO | ============================================================
+2026-08-11 13:12:23,180 | zyder.preprocessing.unsw | INFO | Loading pre-split UNSW-NB15 files:
+2026-08-11 13:12:23,180 | zyder.preprocessing.unsw | INFO |   Training: /Users/sammy/Desktop/zyder/ZYDER2/Dataset/archive/UNSW_NB15_training-set.csv
+2026-08-11 13:12:23,180 | zyder.preprocessing.unsw | INFO |   Testing:  /Users/sammy/Desktop/zyder/ZYDER2/Dataset/archive/UNSW_NB15_testing-set.csv
+2026-08-11 13:12:23,701 | zyder.preprocessing.unsw | INFO |   Training shape: (82332, 45)
+2026-08-11 13:12:23,701 | zyder.preprocessing.unsw | INFO |   Testing shape:  (175341, 45)
+2026-08-11 13:12:23,701 | zyder.preprocessing.unsw | INFO |   Training columns: ['id', 'dur', 'proto', 'service', 'state', 'spkts', 'dpkts', 'sbytes', 'dbytes', 'rate', 'sttl', 'dttl', 'sload', 'dload', 'sloss', 'dloss', 'sinpkt', 'dinpkt', 'sjit', 'djit', 'swin', 'stcpb', 'dtcpb', 'dwin', 'tcprtt', 'synack', 'ackdat', 'smean', 'dmean', 'trans_depth', 'response_body_len', 'ct_srv_src', 'ct_state_ttl', 'ct_dst_ltm', 'ct_src_dport_ltm', 'ct_dst_sport_ltm', 'ct_dst_src_ltm', 'is_ftp_login', 'ct_ftp_cmd', 'ct_flw_http_mthd', 'ct_src_ltm', 'ct_srv_dst', 'is_sm_ips_ports', 'attack_cat', 'label']
+2026-08-11 13:12:23,733 | zyder.preprocessing.unsw | INFO |   Combined shape: (257673, 45)
+2026-08-11 13:12:23,736 | zyder.preprocessing | INFO | Step 1 — Loaded: 257673 rows, 45 columns
+2026-08-11 13:12:23,736 | zyder.preprocessing | INFO |   Columns: ['id', 'dur', 'proto', 'service', 'state', 'spkts', 'dpkts', 'sbytes', 'dbytes', 'rate', 'sttl', 'dttl', 'sload', 'dload', 'sloss', 'dloss', 'sinpkt', 'dinpkt', 'sjit', 'djit', 'swin', 'stcpb', 'dtcpb', 'dwin', 'tcprtt', 'synack', 'ackdat', 'smean', 'dmean', 'trans_depth', 'response_body_len', 'ct_srv_src', 'ct_state_ttl', 'ct_dst_ltm', 'ct_src_dport_ltm', 'ct_dst_sport_ltm', 'ct_dst_src_ltm', 'is_ftp_login', 'ct_ftp_cmd', 'ct_flw_http_mthd', 'ct_src_ltm', 'ct_srv_dst', 'is_sm_ips_ports', 'attack_cat', 'label']
+2026-08-11 13:12:23,777 | zyder.preprocessing.unsw | INFO |   Label distribution: {1: 164673, 0: 93000}
+2026-08-11 13:12:23,781 | zyder.preprocessing | INFO | Step 2 — Labels created. Distribution:
+label
+1    164673
+0     93000
+2026-08-11 13:12:23,941 | zyder.preprocessing | INFO | Step 3 — Removed 0 duplicate rows (257673 remaining)
+2026-08-11 13:12:23,945 | zyder.preprocessing | INFO | Step 4 — Dropped columns: ['id', 'attack_cat', 'label', 'stcpb', 'dtcpb']
+2026-08-11 13:12:23,972 | zyder.preprocessing | INFO | Step 5 — Encoded 'proto': 133 categories
+2026-08-11 13:12:23,998 | zyder.preprocessing | INFO | Step 5 — Encoded 'service': 13 categories
+2026-08-11 13:12:24,023 | zyder.preprocessing | INFO | Step 5 — Encoded 'state': 11 categories
+2026-08-11 13:12:24,027 | zyder.preprocessing | INFO | Step 6 — No missing values found
+2026-08-11 13:12:24,031 | zyder.preprocessing | INFO | Step 7 — No infinite values found
+2026-08-11 13:12:24,032 | zyder.preprocessing | INFO | Final feature matrix: (257673, 40)
+2026-08-11 13:12:24,032 | zyder.preprocessing | INFO | Final features: ['dur', 'proto', 'service', 'state', 'spkts', 'dpkts', 'sbytes', 'dbytes', 'rate', 'sttl', 'dttl', 'sload', 'dload', 'sloss', 'dloss', 'sinpkt', 'dinpkt', 'sjit', 'djit', 'swin', 'dwin', 'tcprtt', 'synack', 'ackdat', 'smean', 'dmean', 'trans_depth', 'response_body_len', 'ct_srv_src', 'ct_state_ttl', 'ct_dst_ltm', 'ct_src_dport_ltm', 'ct_dst_sport_ltm', 'ct_dst_src_ltm', 'is_ftp_login', 'ct_ftp_cmd', 'ct_flw_http_mthd', 'ct_src_ltm', 'ct_srv_dst', 'is_sm_ips_ports']
+2026-08-11 13:12:24,032 | zyder.training | INFO | Checking for near-duplicate flows...
+2026-08-11 13:12:24,133 | zyder.training | INFO |   Removed 104006 near-duplicate flows
+2026-08-11 13:12:24,192 | zyder.training | INFO | 
+Data Split Summary:
+2026-08-11 13:12:24,192 | zyder.training | INFO |   Training:     107566 samples (70%)
+2026-08-11 13:12:24,192 | zyder.training | INFO |   Validation:    23050 samples (15%)
+2026-08-11 13:12:24,192 | zyder.training | INFO |   Test:          23051 samples (15%)
+2026-08-11 13:12:24,192 | zyder.training | INFO |   Stratified: True
+2026-08-11 13:12:24,192 | zyder.training | INFO |   Train — BENIGN:   59940, ATTACK:   47626 (ratio: 0.795)
+2026-08-11 13:12:24,192 | zyder.training | INFO |     Val — BENIGN:   12845, ATTACK:   10205 (ratio: 0.794)
+2026-08-11 13:12:24,192 | zyder.training | INFO |    Test — BENIGN:   12845, ATTACK:   10206 (ratio: 0.795)
+2026-08-11 13:12:24,192 | zyder.evaluation | INFO | ============================================================
+2026-08-11 13:12:24,192 | zyder.evaluation | INFO | ZYDER Model Evaluation
+2026-08-11 13:12:24,193 | zyder.evaluation | INFO | ============================================================
+2026-08-11 13:12:24,242 | zyder.evaluation | INFO | 
+========================================
+2026-08-11 13:12:24,243 | zyder.evaluation | INFO |        EVALUATION METRICS
+2026-08-11 13:12:24,243 | zyder.evaluation | INFO | ========================================
+2026-08-11 13:12:24,243 | zyder.evaluation | INFO |   Accuracy:            0.9235
+2026-08-11 13:12:24,243 | zyder.evaluation | INFO |   Precision:           0.9114
+2026-08-11 13:12:24,243 | zyder.evaluation | INFO |   Recall:              0.9163
+2026-08-11 13:12:24,243 | zyder.evaluation | INFO |   F1 Score:            0.9139
+2026-08-11 13:12:24,243 | zyder.evaluation | INFO |   ROC-AUC:             0.9832
+2026-08-11 13:12:24,243 | zyder.evaluation | INFO |   False Positive Rate: 0.0708
+2026-08-11 13:12:24,243 | zyder.evaluation | INFO |   Threshold:           0.50
+2026-08-11 13:12:24,243 | zyder.evaluation | INFO | ========================================
+2026-08-11 13:12:24,243 | zyder.evaluation | INFO |   TP:     9352  |  FP:      909
+2026-08-11 13:12:24,243 | zyder.evaluation | INFO |   FN:      854  |  TN:    11936
+2026-08-11 13:12:24,243 | zyder.evaluation | INFO | ========================================
+2026-08-11 13:12:24,255 | zyder.evaluation | INFO | 
+Classification Report:
+              precision    recall  f1-score   support
+
+      BENIGN       0.93      0.93      0.93     12845
+      ATTACK       0.91      0.92      0.91     10206
+
+    accuracy                           0.92     23051
+   macro avg       0.92      0.92      0.92     23051
+weighted avg       0.92      0.92      0.92     23051
+
+2026-08-11 13:12:24,358 | zyder.evaluation | INFO |   Saved confusion matrix -> /Users/sammy/Desktop/zyder/ZYDER2/outputs/confusion_matrix_unsw.png
+2026-08-11 13:12:24,436 | zyder.evaluation | INFO |   Saved ROC curve -> /Users/sammy/Desktop/zyder/ZYDER2/outputs/roc_curve_unsw.png
+2026-08-11 13:12:24,513 | zyder.evaluation | INFO |   Saved Precision-Recall curve -> /Users/sammy/Desktop/zyder/ZYDER2/outputs/pr_curve_unsw.png
+2026-08-11 13:12:24,628 | zyder.evaluation | INFO |   Saved feature importance chart -> /Users/sammy/Desktop/zyder/ZYDER2/outputs/feature_importance_unsw.png
+2026-08-11 13:12:24,751 | zyder.evaluation | INFO | 
+Threshold Analysis:
+2026-08-11 13:12:24,751 | zyder.evaluation | INFO |   Best F1:     threshold=0.50, F1=0.9139
+2026-08-11 13:12:24,751 | zyder.evaluation | INFO |   Best Recall: threshold=0.10, Recall=0.9981
+2026-08-11 13:12:24,751 | zyder.evaluation | INFO |   Lowest FPR:  threshold=0.90, FPR=0.0062
+2026-08-11 13:12:24,752 | zyder.evaluation | INFO | Saved evaluation results to /Users/sammy/Desktop/zyder/ZYDER2/outputs/evaluation_results_unsw.json

@@ -1,0 +1,86 @@
+# ============================================================
+# ZYDER – ML-Based Intrusion Detection System
+# Central Configuration
+# ============================================================
+
+# ---- Dataset Paths ----
+datasets:
+  unsw_nb15:
+    # Pre-split training/testing sets (have headers, 45 columns)
+    training_set: "Dataset/archive/UNSW_NB15_training-set.csv"
+    testing_set: "Dataset/archive/UNSW_NB15_testing-set.csv"
+    # Raw CSV files (no headers, 49 columns — optional, used if training_set absent)
+    raw_files:
+      - "Dataset/archive/UNSW-NB15_1.csv"
+      - "Dataset/archive/UNSW-NB15_2.csv"
+      - "Dataset/archive/UNSW-NB15_3.csv"
+      - "Dataset/archive/UNSW-NB15_4.csv"
+    features_file: "Dataset/archive/NUSW-NB15_features.csv"
+
+  cicids2017:
+    raw_files:
+      - "Dataset/archivecicd/Monday-WorkingHours.pcap_ISCX.csv"
+      - "Dataset/archivecicd/Tuesday-WorkingHours.pcap_ISCX.csv"
+      - "Dataset/archivecicd/Wednesday-workingHours.pcap_ISCX.csv"
+      - "Dataset/archivecicd/Thursday-WorkingHours-Morning-WebAttacks.pcap_ISCX.csv"
+      - "Dataset/archivecicd/Thursday-WorkingHours-Afternoon-Infilteration.pcap_ISCX.csv"
+      - "Dataset/archivecicd/Friday-WorkingHours-Morning.pcap_ISCX.csv"
+      - "Dataset/archivecicd/Friday-WorkingHours-Afternoon-PortScan.pcap_ISCX.csv"
+      - "Dataset/archivecicd/Friday-WorkingHours-Afternoon-DDos.pcap_ISCX.csv"
+
+# ---- Output Paths ----
+paths:
+  models_dir: "models"
+  outputs_dir: "outputs"
+  suricata_eve_log: "/tmp/zyder-smb-suricata/eve.json"
+
+# ---- Data Splitting ----
+splitting:
+  train_ratio: 0.70
+  val_ratio: 0.15
+  test_ratio: 0.15
+  random_state: 42
+  stratify: true
+  # If true, CICIDS2017 files are treated in chronological order
+  # (Monday→Friday) for time-aware splitting instead of random shuffle.
+  time_aware_split: false
+
+# ---- XGBoost Hyperparameters ----
+xgboost:
+  n_estimators: 500
+  max_depth: 8
+  learning_rate: 0.05
+  subsample: 0.8
+  colsample_bytree: 0.8
+  min_child_weight: 5
+  gamma: 0.1
+  reg_alpha: 0.1
+  reg_lambda: 1.0
+  # scale_pos_weight is computed automatically from class distribution
+  # Set to null to auto-compute, or provide a fixed value
+  scale_pos_weight: null
+  # Early stopping rounds on validation set
+  early_stopping_rounds: 50
+  eval_metric: "logloss"
+  tree_method: "hist"      # "hist" for CPU, "gpu_hist" for GPU
+  n_jobs: -1
+  random_state: 42
+  verbosity: 1
+
+# ---- Classification Threshold ----
+detection:
+  threshold:
+    unsw: 0.50
+    cicids: 0.75
+  # Enable SHAP for every prediction (slower but explainable)
+  shap_enabled: false
+
+# ---- Gemini Integration ----
+gemini:
+  api_key: ""              # Set your Gemini API key here
+  model: "gemini-1.5-flash"
+
+# ---- Logging ----
+logging:
+  level: "INFO"
+  log_file: "outputs/zyder.log"

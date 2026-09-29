@@ -1,0 +1,1404 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ZYDER2 - Hybrid AI Network Intrusion Detection</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <!-- Marked.js for Markdown -->
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        slate: {
+                            850: '#151f32',
+                            900: '#0f172a',
+                            950: '#020617',
+                        },
+                        cyan: {
+                            400: '#22d3ee',
+                            500: '#06b6d4',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        /* Custom scrollbar for dark theme */
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-track { background: #0f172a; }
+        ::-webkit-scrollbar-thumb { background: #334155; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #475569; }
+
+        .severity-critical { @apply bg-red-950/50 text-red-400 border border-red-900; }
+        .severity-high { @apply bg-orange-950/50 text-orange-400 border border-orange-900; }
+        .severity-medium { @apply bg-yellow-950/50 text-yellow-400 border border-yellow-900; }
+        .severity-low { @apply bg-green-950/50 text-green-400 border border-green-900; }
+        
+        .markdown-body h1, .markdown-body h2, .markdown-body h3 { @apply font-bold text-slate-100 mt-4 mb-2; }
+        .markdown-body p { @apply mb-3 text-slate-300; }
+        .markdown-body ul { @apply list-disc pl-5 mb-3 text-slate-300; }
+        .markdown-body strong { @apply font-semibold text-slate-200; }
+        
+        .nav-item.active { @apply bg-slate-800 text-cyan-400 border-r-2 border-cyan-400; }
+    </style>
+</head>
+<body class="bg-slate-900 text-slate-300 font-sans h-screen flex overflow-hidden selection:bg-cyan-500/30">
+
+    <!-- Sidebar -->
+    <aside class="w-64 bg-slate-950 border-r border-slate-800 flex flex-col flex-shrink-0 z-10">
+        <div class="h-16 flex items-center px-6 border-b border-slate-800">
+            <i data-lucide="shield-alert" class="w-6 h-6 text-cyan-500 mr-3"></i>
+            <div>
+                <h1 class="font-bold text-slate-100 tracking-wide text-lg leading-tight">ZYDER2</h1>
+                <p class="text-[10px] text-slate-500 uppercase tracking-wider font-semibold">Hybrid AI NIDS</p>
+            </div>
+        </div>
+        
+        <nav class="flex-1 py-4 flex flex-col space-y-1 overflow-y-auto">
+            <a href="#" onclick="nav('overview')" id="nav-overview" class="nav-item active flex items-center px-6 py-3 text-sm font-medium hover:bg-slate-800/50 text-slate-400 transition-colors">
+                <i data-lucide="layout-dashboard" class="w-5 h-5 mr-3"></i> Overview
+            </a>
+            <a href="#" onclick="nav('pcap')" id="nav-pcap" class="nav-item flex items-center px-6 py-3 text-sm font-medium hover:bg-slate-800/50 text-slate-400 transition-colors">
+                <i data-lucide="upload-cloud" class="w-5 h-5 mr-3"></i> PCAP Analysis
+            </a>
+            <a href="#" onclick="nav('incidents')" id="nav-incidents" class="nav-item flex items-center px-6 py-3 text-sm font-medium hover:bg-slate-800/50 text-slate-400 transition-colors">
+                <i data-lucide="alert-triangle" class="w-5 h-5 mr-3"></i> Incidents
+            </a>
+            <a href="#" onclick="nav('analytics')" id="nav-analytics" class="nav-item flex items-center px-6 py-3 text-sm font-medium hover:bg-slate-800/50 text-slate-400 transition-colors">
+                <i data-lucide="bar-chart-2" class="w-5 h-5 mr-3"></i> Analytics
+            </a>
+            <a href="#" onclick="nav('reports')" id="nav-reports" class="nav-item flex items-center px-6 py-3 text-sm font-medium hover:bg-slate-800/50 text-slate-400 transition-colors">
+                <i data-lucide="file-text" class="w-5 h-5 mr-3"></i> Reports
+            </a>
+        </nav>
+        
+        <div class="p-4 border-t border-slate-800">
+            <div class="flex items-center text-xs text-slate-500">
+                <div class="w-2 h-2 rounded-full bg-green-500 mr-2"></div>
+                API Connected
+            </div>
+        </div>
+    </aside>
+
+    <!-- Main Content Wrapper -->
+    <div class="flex-1 flex flex-col h-screen overflow-hidden relative bg-slate-900">
+        
+        <!-- Topbar -->
+        <header class="h-16 border-b border-slate-800 flex items-center justify-between px-6 bg-slate-900/80 backdrop-blur z-10 flex-shrink-0">
+            <h2 id="pageTitle" class="text-lg font-semibold text-slate-100">Overview Dashboard</h2>
+            <div class="flex items-center space-x-4">
+                <button onclick="refreshData()" class="p-2 text-slate-400 hover:text-slate-100 transition-colors rounded-lg hover:bg-slate-800" title="Refresh Dashboard">
+                    <i data-lucide="refresh-cw" class="w-4 h-4"></i>
+                </button>
+                <div class="h-6 w-px bg-slate-700"></div>
+                <div class="flex items-center space-x-2">
+                    <div class="w-8 h-8 rounded bg-slate-800 border border-slate-700 flex items-center justify-center text-cyan-500">
+                        <i data-lucide="user" class="w-4 h-4"></i>
+                    </div>
+                    <span class="text-sm font-medium text-slate-300">SOC Analyst</span>
+                </div>
+            </div>
+        </header>
+
+        <!-- View Container -->
+        <main class="flex-1 overflow-x-hidden overflow-y-auto p-6" id="mainContent">
+            
+            <!-- OVERVIEW VIEW -->
+            <div id="view-overview" class="view-section space-y-6">
+                <!-- KPI Cards -->
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-4">
+                    <div class="bg-slate-850 p-5 rounded-xl border border-slate-800 shadow-sm">
+                        <p class="text-xs text-slate-500 uppercase tracking-wider font-semibold mb-1">PCAPs Analyzed</p>
+                        <h3 class="text-3xl font-bold text-slate-100" id="kpi-pcaps">0</h3>
+                    </div>
+                    <div class="bg-slate-850 p-5 rounded-xl border border-slate-800 shadow-sm">
+                        <p class="text-xs text-slate-500 uppercase tracking-wider font-semibold mb-1">Total Flows</p>
+                        <h3 class="text-3xl font-bold text-slate-100" id="kpi-flows">0</h3>
+                    </div>
+                    <div class="bg-slate-850 p-5 rounded-xl border border-slate-800 shadow-sm">
+                        <p class="text-xs text-slate-500 uppercase tracking-wider font-semibold mb-1">Benign Flows</p>
+                        <h3 class="text-3xl font-bold text-green-400" id="kpi-benign">0</h3>
+                    </div>
+                    <div class="bg-slate-850 p-5 rounded-xl border border-slate-800 shadow-sm">
+                        <p class="text-xs text-slate-500 uppercase tracking-wider font-semibold mb-1">Intrusions</p>
+                        <h3 class="text-3xl font-bold text-red-400" id="kpi-intrusions">0</h3>
+                    </div>
+                    <div class="bg-slate-850 p-5 rounded-xl border border-slate-800 shadow-sm flex flex-col justify-between">
+                        <p class="text-xs text-slate-500 uppercase tracking-wider font-semibold mb-2">Severity Breakdown</p>
+                        <div class="grid grid-cols-2 gap-2 text-xs">
+                            <div class="flex justify-between"><span class="text-red-400">CRIT</span> <span class="font-bold text-slate-200" id="kpi-crit">0</span></div>
+                            <div class="flex justify-between"><span class="text-orange-400">HIGH</span> <span class="font-bold text-slate-200" id="kpi-high">0</span></div>
+                            <div class="flex justify-between"><span class="text-yellow-400">MED</span> <span class="font-bold text-slate-200" id="kpi-med">0</span></div>
+                            <div class="flex justify-between"><span class="text-green-400">LOW</span> <span class="font-bold text-slate-200" id="kpi-low">0</span></div>
+                        </div>
+                    </div>
+                    <div class="bg-slate-850 p-5 rounded-xl border border-slate-800 shadow-sm flex flex-col justify-between">
+                        <p class="text-xs text-slate-500 uppercase tracking-wider font-semibold mb-2">Detection Source</p>
+                        <div class="grid grid-cols-1 gap-1 text-xs">
+                            <div class="flex justify-between"><span class="text-purple-400">ML Only</span> <span class="font-bold text-slate-200" id="kpi-src-ml">0</span></div>
+                            <div class="flex justify-between"><span class="text-blue-400">Signature Only</span> <span class="font-bold text-slate-200" id="kpi-src-sig">0</span></div>
+                            <div class="flex justify-between"><span class="text-cyan-400">Hybrid (Both)</span> <span class="font-bold text-slate-200" id="kpi-src-both">0</span></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <!-- Attack Activity Chart -->
+                    <div class="lg:col-span-2 bg-slate-850 p-5 rounded-xl border border-slate-800 shadow-sm h-80 flex flex-col">
+                        <h3 class="text-sm font-semibold text-slate-200 mb-4 flex items-center">
+                            <i data-lucide="activity" class="w-4 h-4 mr-2 text-slate-400"></i> Attack Activity
+                        </h3>
+                        <div class="flex-1 relative w-full h-full" id="overviewChartContainer">
+                            <!-- Chart goes here, or empty state -->
+                            <div id="overviewChartEmpty" class="absolute inset-0 flex items-center justify-center text-slate-500 text-sm">No PCAP analysis available</div>
+                            <canvas id="overviewActivityChart" class="hidden"></canvas>
+                        </div>
+                    </div>
+                    
+                    <!-- Severity Chart -->
+                    <div class="bg-slate-850 p-5 rounded-xl border border-slate-800 shadow-sm h-80 flex flex-col">
+                        <h3 class="text-sm font-semibold text-slate-200 mb-4 flex items-center">
+                            <i data-lucide="pie-chart" class="w-4 h-4 mr-2 text-slate-400"></i> Severity Distribution
+                        </h3>
+                        <div class="flex-1 relative w-full h-full">
+                            <div id="overviewSevEmpty" class="absolute inset-0 flex items-center justify-center text-slate-500 text-sm">No data</div>
+                            <canvas id="overviewSevChart" class="hidden"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Recent Incidents -->
+                <div class="bg-slate-850 rounded-xl border border-slate-800 shadow-sm overflow-hidden flex flex-col">
+                    <div class="p-5 border-b border-slate-800 flex justify-between items-center">
+                        <h3 class="text-sm font-semibold text-slate-200 flex items-center">
+                            <i data-lucide="list" class="w-4 h-4 mr-2 text-slate-400"></i> Recent Incidents
+                        </h3>
+                        <button onclick="nav('incidents')" class="text-xs text-cyan-400 hover:text-cyan-300">View All</button>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left text-sm whitespace-nowrap">
+                            <thead class="bg-slate-900/50 text-slate-400 text-xs uppercase tracking-wider">
+                                <tr>
+                                    <th class="px-5 py-3 font-medium">Time</th>
+                                    <th class="px-5 py-3 font-medium">Src → Dst</th>
+                                    <th class="px-5 py-3 font-medium">Proto</th>
+                                    <th class="px-5 py-3 font-medium">Trigger</th>
+                                    <th class="px-5 py-3 font-medium">Severity</th>
+                                    <th class="px-5 py-3 font-medium text-right">Action</th>
+                                </tr>
+                            </thead>
+                            <tbody id="overviewTableBody" class="divide-y divide-slate-800/50 text-slate-300">
+                                <tr><td colspan="6" class="px-5 py-8 text-center text-slate-500">No intrusions detected</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- PCAP ANALYSIS VIEW -->
+            <div id="view-pcap" class="view-section hidden space-y-6">
+                <div class="bg-slate-850 p-8 rounded-xl border border-slate-800 shadow-sm max-w-3xl mx-auto mt-8">
+                    <h2 class="text-xl font-semibold text-slate-100 mb-2 flex items-center">
+                        <i data-lucide="upload-cloud" class="w-6 h-6 mr-3 text-cyan-400"></i> Analyze Network Capture
+                    </h2>
+                    <p class="text-sm text-slate-400 mb-6">Upload a .pcap or .pcapng file to run it through the ZYDER2 hybrid detection engine (ML + Suricata).</p>
+                    
+                    <form id="pcapForm" class="space-y-6">
+                        <div class="border-2 border-dashed border-slate-700 rounded-lg p-8 text-center hover:border-cyan-500/50 transition-colors bg-slate-900/50 relative">
+                            <input type="file" id="pcapFile" accept=".pcap,.pcapng" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer" onchange="updateFileName()">
+                            <i data-lucide="file-archive" class="w-10 h-10 mx-auto text-slate-500 mb-3"></i>
+                            <p class="text-slate-300 font-medium mb-1">Click to browse or drag file here</p>
+                            <p class="text-xs text-slate-500">Supports .pcap, .pcapng</p>
+                            <div id="selectedFileName" class="mt-4 text-sm font-semibold text-cyan-400 hidden"></div>
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-semibold text-slate-400 mb-2">Target ML Engine</label>
+                            <select id="pcapDataset" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-4 py-3 text-sm text-slate-200 focus:outline-none focus:border-cyan-500">
+                                <option value="unsw">UNSW-NB15 (Zeek + Scapy Features)</option>
+                                <option value="cicids">CIC-IDS2017 (CICFlowMeter Features)</option>
+                            </select>
+                        </div>
+                        
+                        <div class="flex items-center justify-between">
+                            <div id="pcapStatus" class="text-sm font-medium text-slate-400">Status: Ready</div>
+                            <button type="submit" id="btnAnalyzePcap" class="bg-cyan-600 hover:bg-cyan-500 text-white px-6 py-2 rounded-lg font-medium transition-colors shadow-lg shadow-cyan-900/20 flex items-center">
+                                <i data-lucide="play" class="w-4 h-4 mr-2"></i> Analyze PCAP
+                            </button>
+                        </div>
+                    </form>
+                    
+                    <div id="pcapSummarySection" class="hidden mt-8 border-t border-slate-800 pt-8">
+                        <div class="flex justify-between items-center mb-6">
+                            <h3 class="text-lg font-bold text-slate-100 flex items-center">
+                                FINAL VERDICT: <span id="pcapVerdictBadge" class="ml-3 px-3 py-1 rounded text-sm uppercase tracking-wider font-bold"></span>
+                            </h3>
+                            <button id="btnGeneratePcapReport" class="bg-indigo-600 hover:bg-indigo-500 text-white px-4 py-2 rounded font-medium transition-colors shadow-lg shadow-indigo-900/20 flex items-center text-sm hidden">
+                                <i data-lucide="file-text" class="w-4 h-4 mr-2"></i> Generate Full Report
+                            </button>
+                        </div>
+                        
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                            <div class="bg-slate-900/50 p-4 rounded-lg border border-slate-800">
+                                <h4 class="text-xs text-slate-500 uppercase tracking-wider mb-2 font-semibold">Detection Summary</h4>
+                                <ul class="text-sm text-slate-300 space-y-1">
+                                    <li>Total flows: <span id="sumTotal" class="text-white font-medium"></span></li>
+                                    <li>Benign: <span id="sumBenign" class="text-green-400 font-medium"></span></li>
+                                    <li>Suspicious: <span id="sumSuspicious" class="text-yellow-400 font-medium"></span></li>
+                                    <li>Malicious: <span id="sumMalicious" class="text-red-400 font-medium"></span></li>
+                                    <li>Intrusions: <span id="sumIntrusions" class="text-white font-medium"></span></li>
+                                </ul>
+                            </div>
+                            
+                            <div class="bg-slate-900/50 p-4 rounded-lg border border-slate-800">
+                                <h4 class="text-xs text-slate-500 uppercase tracking-wider mb-2 font-semibold">Detection Sources</h4>
+                                <ul class="text-sm text-slate-300 space-y-1">
+                                    <li>ML Only: <span id="sumMlOnly" class="text-white font-medium"></span></li>
+                                    <li>Signature Only: <span id="sumSigOnly" class="text-white font-medium"></span></li>
+                                    <li>Hybrid: <span id="sumHybrid" class="text-white font-medium"></span></li>
+                                </ul>
+                            </div>
+                            
+                            <div class="bg-slate-900/50 p-4 rounded-lg border border-slate-800">
+                                <h4 class="text-xs text-slate-500 uppercase tracking-wider mb-2 font-semibold">Engine Results</h4>
+                                <ul class="text-sm text-slate-300 space-y-1">
+                                    <li>Signature Alerts: <span id="sumSigAlerts" class="text-white font-medium"></span></li>
+                                    <li class="mt-2 border-t border-slate-800/50 pt-2">ML Benign: <span id="sumMlBenign" class="text-white font-medium"></span></li>
+                                    <li>ML Malicious: <span id="sumMlMalicious" class="text-white font-medium"></span></li>
+                                </ul>
+                            </div>
+                        </div>
+                        
+                        <div id="pcapReportContainer" class="mt-6"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- INCIDENTS VIEW -->
+            <div id="view-incidents" class="view-section hidden space-y-6 flex flex-col h-full">
+                <!-- Filters -->
+                <div class="bg-slate-850 p-4 rounded-xl border border-slate-800 shadow-sm flex flex-wrap gap-4 items-end flex-shrink-0">
+                    <div class="flex-1 min-w-[200px]">
+                        <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Search IP</label>
+                        <input type="text" id="filterSearch" placeholder="192.168..." class="w-full bg-slate-900 border border-slate-700 rounded-md px-3 py-1.5 text-sm text-slate-200 focus:outline-none focus:border-cyan-500">
+                    </div>
+                    <div class="w-32">
+                        <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Severity</label>
+                        <select id="filterSeverity" class="w-full bg-slate-900 border border-slate-700 rounded-md px-3 py-1.5 text-sm text-slate-200 focus:outline-none focus:border-cyan-500">
+                            <option value="">All</option>
+                            <option value="CRITICAL">Critical</option>
+                            <option value="HIGH">High</option>
+                            <option value="MEDIUM">Medium</option>
+                            <option value="LOW">Low</option>
+                        </select>
+                    </div>
+                    <div class="w-32">
+                        <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Source</label>
+                        <select id="filterTrigger" class="w-full bg-slate-900 border border-slate-700 rounded-md px-3 py-1.5 text-sm text-slate-200 focus:outline-none focus:border-cyan-500">
+                            <option value="">All</option>
+                            <option value="ML">ML Only</option>
+                            <option value="SIGNATURE">Signature</option>
+                            <option value="BOTH">Hybrid</option>
+                        </select>
+                    </div>
+                    <button onclick="applyFilters()" class="bg-slate-700 hover:bg-slate-600 text-slate-200 px-4 py-1.5 rounded-md text-sm font-medium transition-colors">Apply</button>
+                    <button onclick="clearFilters()" class="text-slate-400 hover:text-slate-300 px-2 py-1.5 text-sm transition-colors">Clear</button>
+                </div>
+
+                <!-- Full Table -->
+                <div class="bg-slate-850 rounded-xl border border-slate-800 shadow-sm overflow-hidden flex-1 flex flex-col min-h-[400px]">
+                    <div class="overflow-x-auto flex-1">
+                        <table class="w-full text-left text-sm whitespace-nowrap">
+                            <thead class="bg-slate-900/50 text-slate-400 text-xs uppercase tracking-wider sticky top-0 z-10">
+                                <tr>
+                                    <th class="px-5 py-3 font-medium">Time</th>
+                                    <th class="px-5 py-3 font-medium">Src IP : Port</th>
+                                    <th class="px-5 py-3 font-medium">Dst IP : Port</th>
+                                    <th class="px-5 py-3 font-medium">Proto</th>
+                                    <th class="px-5 py-3 font-medium">Trigger</th>
+                                    <th class="px-5 py-3 font-medium">Severity</th>
+                                    <th class="px-5 py-3 font-medium text-right">Action</th>
+                                </tr>
+                            </thead>
+                            <tbody id="incidentsTableBody" class="divide-y divide-slate-800/50 text-slate-300">
+                                <tr><td colspan="7" class="px-5 py-12 text-center text-slate-500">No intrusions detected</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="p-3 border-t border-slate-800 bg-slate-900/30 text-xs text-slate-500 flex justify-between items-center">
+                        <span id="incidentsCount">Showing 0 incidents</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ANALYTICS VIEW -->
+            <div id="view-analytics" class="view-section hidden space-y-6">
+                <div id="analyticsEmptyState" class="flex flex-col items-center justify-center py-20 text-slate-500">
+                    <i data-lucide="pie-chart" class="w-12 h-12 mb-4 opacity-50"></i>
+                    <p>No PCAP analysis data available to visualize.</p>
+                </div>
+                
+                <!-- Benign Assessment Banner (hidden by default) -->
+                <div id="analyticsBenignBanner" class="hidden bg-green-900/20 border border-green-800/30 rounded-xl p-6 flex items-start">
+                    <i data-lucide="shield-check" class="w-8 h-8 text-green-400 mr-4 flex-shrink-0"></i>
+                    <div>
+                        <h3 class="text-lg font-bold text-green-400 mb-1">Benign Security Assessment</h3>
+                        <p class="text-slate-300 text-sm">ZYDER analyzed the traffic and found zero malicious incidents. The charts below represent standard network traffic behavior.</p>
+                    </div>
+                </div>
+
+                <!-- Attack Dashboard Banner (hidden by default) -->
+                <div id="analyticsAttackBanner" class="hidden bg-red-900/20 border border-red-800/30 rounded-xl p-6 flex items-start">
+                    <i data-lucide="shield-alert" class="w-8 h-8 text-red-400 mr-4 flex-shrink-0"></i>
+                    <div>
+                        <h3 class="text-lg font-bold text-red-400 mb-1">ZYDER detected malicious activity.</h3>
+                        <p class="text-slate-300 text-sm">The charts below expose actual attack metrics, severity distribution, and detection mechanisms for the identified incidents.</p>
+                    </div>
+                </div>
+
+                <div id="analyticsCharts" class="hidden grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <!-- Source IP Chart -->
+                    <div class="bg-slate-850 p-5 rounded-xl border border-slate-800 shadow-sm h-80 flex flex-col">
+                        <h3 id="titleSrcIp" class="text-sm font-semibold text-slate-200 mb-4">Top Source IPs</h3>
+                        <div class="flex-1 relative w-full h-full"><canvas id="chartSrcIp"></canvas></div>
+                    </div>
+                    
+                    <!-- Destination IP Chart -->
+                    <div class="bg-slate-850 p-5 rounded-xl border border-slate-800 shadow-sm h-80 flex flex-col">
+                        <h3 id="titleDstIp" class="text-sm font-semibold text-slate-200 mb-4">Top Destination IPs</h3>
+                        <div class="flex-1 relative w-full h-full"><canvas id="chartDstIp"></canvas></div>
+                    </div>
+                    
+                    <!-- Protocol Chart -->
+                    <div class="bg-slate-850 p-5 rounded-xl border border-slate-800 shadow-sm h-80 flex flex-col">
+                        <h3 id="titleProto" class="text-sm font-semibold text-slate-200 mb-4">Protocol Distribution</h3>
+                        <div class="flex-1 relative w-full h-full"><canvas id="chartProto"></canvas></div>
+                    </div>
+                    
+                    <!-- Detection Source Breakdown (Hidden for benign) -->
+                    <div id="chartTriggerContainer" class="bg-slate-850 p-5 rounded-xl border border-slate-800 shadow-sm h-80 flex flex-col">
+                        <h3 class="text-sm font-semibold text-slate-200 mb-4">Detection Source</h3>
+                        <div class="flex-1 relative w-full h-full"><canvas id="chartTrigger"></canvas></div>
+                    </div>
+
+                    <!-- Severity Chart (Hidden for benign) -->
+                    <div id="chartSevContainer" class="bg-slate-850 p-5 rounded-xl border border-slate-800 shadow-sm h-80 flex flex-col">
+                        <h3 class="text-sm font-semibold text-slate-200 mb-4">Severity Distribution</h3>
+                        <div class="flex-1 relative w-full h-full"><canvas id="chartSev"></canvas></div>
+                    </div>
+
+                    <!-- Attack Category Chart (Hidden for benign) -->
+                    <div id="chartCategoryContainer" class="bg-slate-850 p-5 rounded-xl border border-slate-800 shadow-sm h-80 flex flex-col">
+                        <h3 class="text-sm font-semibold text-slate-200 mb-4">Attack Categories</h3>
+                        <div class="flex-1 relative w-full h-full"><canvas id="chartCategory"></canvas></div>
+                    </div>
+
+                    <!-- Attack Timeline Chart (Hidden for benign) -->
+                    <div id="chartTimelineContainer" class="hidden bg-slate-850 p-5 rounded-xl border border-slate-800 shadow-sm h-80 flex flex-col lg:col-span-2">
+                        <h3 class="text-sm font-semibold text-slate-200 mb-4">Attack Timeline</h3>
+                        <div class="flex-1 relative w-full h-full"><canvas id="chartTimeline"></canvas></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- REPORTS VIEW -->
+            <div id="view-reports" class="view-section hidden space-y-6">
+                <div class="bg-slate-850 rounded-xl border border-slate-800 shadow-sm overflow-hidden">
+                    <div class="p-5 border-b border-slate-800">
+                        <h3 class="text-sm font-semibold text-slate-200">Generated Hybrid Reports</h3>
+                        <p class="text-xs text-slate-500 mt-1">Reports generated via Gemini during this session.</p>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left text-sm whitespace-nowrap">
+                            <thead class="bg-slate-900/50 text-slate-400 text-xs uppercase tracking-wider">
+                                <tr>
+                                    <th class="px-5 py-3 font-medium">Detection ID</th>
+                                    <th class="px-5 py-3 font-medium">Target</th>
+                                    <th class="px-5 py-3 font-medium">Severity</th>
+                                    <th class="px-5 py-3 font-medium">Status</th>
+                                    <th class="px-5 py-3 font-medium text-right">View</th>
+                                </tr>
+                            </thead>
+                            <tbody id="reportsTableBody" class="divide-y divide-slate-800/50 text-slate-300">
+                                <tr><td colspan="5" class="px-5 py-8 text-center text-slate-500">No reports generated yet</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+        </main>
+    </div>
+
+    <!-- INCIDENT DETAILS DRAWER (MODAL) -->
+    <div id="incidentDrawer" class="fixed inset-0 z-50 hidden">
+        <!-- Backdrop -->
+        <div class="absolute inset-0 bg-slate-950/80 backdrop-blur-sm" onclick="closeDrawer()"></div>
+        
+        <!-- Drawer Panel -->
+        <div class="absolute right-0 top-0 bottom-0 w-full max-w-3xl bg-slate-900 border-l border-slate-700 shadow-2xl flex flex-col transform transition-transform translate-x-0 overflow-hidden">
+            <!-- Drawer Header -->
+            <div class="h-16 border-b border-slate-800 flex justify-between items-center px-6 bg-slate-850 flex-shrink-0">
+                <h2 class="text-lg font-bold text-slate-100 flex items-center">
+                    <i data-lucide="search" class="w-5 h-5 mr-2 text-cyan-400"></i> Incident Investigation
+                </h2>
+                <button onclick="closeDrawer()" class="text-slate-400 hover:text-white p-2 rounded-lg hover:bg-slate-800 transition-colors">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+            
+            <!-- Drawer Content (Scrollable) -->
+            <div class="flex-1 overflow-y-auto p-6" id="drawerContent">
+                <!-- Will be populated dynamically -->
+            </div>
+            
+            <!-- Drawer Footer -->
+            <div class="p-4 border-t border-slate-800 bg-slate-850 flex justify-end space-x-3 flex-shrink-0">
+                <button onclick="closeDrawer()" class="px-4 py-2 rounded-lg font-medium text-sm text-slate-300 hover:text-white hover:bg-slate-700 transition-colors">Close</button>
+                <button id="btnGenerateReport" class="bg-cyan-600 hover:bg-cyan-500 text-white px-6 py-2 rounded-lg font-medium text-sm transition-colors shadow-lg shadow-cyan-900/20 flex items-center">
+                    <i data-lucide="file-text" class="w-4 h-4 mr-2"></i> Generate Hybrid Report
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- APP LOGIC -->
+    <script>
+        // --- GLOBAL STATE ---
+                const state = {
+            pcapsAnalyzed: 0,
+            totalFlows: 0,
+            intrusions: 0,
+            allDetections: [], // Store actual intrusion objects from /hybrid/pcap
+            reports: {},       // detection_id -> full report payload
+            currentDetectionId: null, // currently viewed in drawer
+            latestAnalysisId: null,
+            latestAnalysisSummary: null,
+            latestFlows: []
+        };
+
+        // --- INIT ---
+        document.addEventListener("DOMContentLoaded", () => {
+            lucide.createIcons();
+            
+            // Chart.js global defaults for dark theme
+            Chart.defaults.color = '#94a3b8';
+            Chart.defaults.borderColor = '#1e293b';
+            
+            nav('overview');
+        });
+
+        // --- NAVIGATION ---
+        function nav(viewId) {
+            document.querySelectorAll('.view-section').forEach(el => el.classList.add('hidden'));
+            document.getElementById(`view-${viewId}`).classList.remove('hidden');
+            
+            document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+            document.getElementById(`nav-${viewId}`).classList.add('active');
+            
+            const titles = {
+                'overview': 'Overview Dashboard',
+                'pcap': 'PCAP Analysis',
+                'incidents': 'Incident Management',
+                'analytics': 'Security Analytics',
+                'reports': 'Generated Reports'
+            };
+            document.getElementById('pageTitle').innerText = titles[viewId];
+            
+            if (viewId === 'overview') updateOverviewCharts();
+            if (viewId === 'analytics') updateAnalyticsCharts();
+            if (viewId === 'reports') renderReportsTable();
+        }
+
+        function refreshData() {
+            // Re-render current active view components
+            renderTables();
+            updateOverviewKPIs();
+            updateOverviewCharts();
+            updateAnalyticsCharts();
+        }
+
+        // --- UTILS ---
+        function getSevClass(sev) {
+            if (sev === 'CRITICAL') return 'severity-critical';
+            if (sev === 'HIGH') return 'severity-high';
+            if (sev === 'MEDIUM') return 'severity-medium';
+            return 'severity-low';
+        }
+
+        // --- PCAP UPLOAD ---
+        function updateFileName() {
+            const input = document.getElementById('pcapFile');
+            const display = document.getElementById('selectedFileName');
+            if (input.files.length > 0) {
+                display.innerText = input.files[0].name;
+                display.classList.remove('hidden');
+            } else {
+                display.classList.add('hidden');
+            }
+        }
+
+        document.getElementById('pcapForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const fileInput = document.getElementById('pcapFile');
+            const statusDiv = document.getElementById('pcapStatus');
+            const btn = document.getElementById('btnAnalyzePcap');
+            
+            if (!fileInput.files[0]) {
+                alert("Please select a .pcap or .pcapng file.");
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append('file', fileInput.files[0]);
+            formData.append('dataset', document.getElementById('pcapDataset').value);
+
+            statusDiv.innerHTML = '<i data-lucide="loader" class="w-4 h-4 inline mr-1 animate-spin"></i> Analyzing PCAP...';
+            statusDiv.className = 'text-sm font-medium text-cyan-400';
+            btn.disabled = true;
+            btn.classList.add('opacity-50');
+            lucide.createIcons();
+            
+            try {
+                const res = await fetch('/hybrid/pcap', { method: 'POST', body: formData });
+                const data = await res.json();
+                
+                if (res.ok && data.status === 'success') {
+                    statusDiv.innerHTML = `<i data-lucide="check-circle" class="w-4 h-4 inline mr-1"></i> Done. ${data.flow_count} flows, ${data.total_intrusions} intrusions.`;
+                    statusDiv.className = 'text-sm font-medium text-green-400';
+                    
+                    // Update state
+                    state.pcapsAnalyzed++;
+                    state.totalFlows += data.flow_count;
+                    state.latestAnalysisId = data.analysis_id;
+                    
+                    const total = data.flow_count;
+                    const intrusions = data.total_intrusions;
+                    const benign = total - intrusions;
+                    const mlOnly = data.results.filter(r => r.result.triggered_by === 'ML').length;
+                    const sigOnly = data.results.filter(r => r.result.triggered_by === 'SIGNATURE').length;
+                    const hybrid = data.results.filter(r => r.result.triggered_by === 'BOTH' || r.result.triggered_by === 'HYBRID').length;
+                    const sigAlerts = data.results.filter(r => !!r.result.signature).length;
+                    const mlBenign = data.results.filter(r => r.result.ml_prediction === 'BENIGN').length;
+                    const mlMalicious = total - mlBenign;
+                    
+                    state.latestFlows = data.results.map(r => r.result);
+                    state.latestAnalysisSummary = {
+                        total, benign, intrusions, mlOnly, sigOnly, hybrid, sigAlerts, mlBenign, mlMalicious
+                    };
+                    
+                    // Display Summary
+                    document.getElementById('pcapSummarySection').classList.remove('hidden');
+                    const vBadge = document.getElementById('pcapVerdictBadge');
+                    if (intrusions === 0) {
+                        vBadge.innerText = 'BENIGN';
+                        vBadge.className = 'ml-3 px-3 py-1 rounded text-sm uppercase tracking-wider font-bold bg-green-500/20 text-green-400 border border-green-500/30';
+                    } else {
+                        vBadge.innerText = 'MALICIOUS';
+                        vBadge.className = 'ml-3 px-3 py-1 rounded text-sm uppercase tracking-wider font-bold bg-red-500/20 text-red-400 border border-red-500/30';
+                    }
+                    
+                    document.getElementById('sumTotal').innerText = total;
+                    document.getElementById('sumBenign').innerText = benign;
+                    document.getElementById('sumSuspicious').innerText = '0'; // placeholder logic
+                    document.getElementById('sumMalicious').innerText = intrusions;
+                    document.getElementById('sumIntrusions').innerText = intrusions;
+                    document.getElementById('sumMlOnly').innerText = mlOnly;
+                    document.getElementById('sumSigOnly').innerText = sigOnly;
+                    document.getElementById('sumHybrid').innerText = hybrid;
+                    document.getElementById('sumSigAlerts').innerText = sigAlerts;
+                    document.getElementById('sumMlBenign').innerText = mlBenign;
+                    document.getElementById('sumMlMalicious').innerText = mlMalicious;
+                    
+                    const btnReport = document.getElementById('btnGeneratePcapReport');
+                    btnReport.classList.remove('hidden');
+                    btnReport.disabled = false;
+                    btnReport.innerHTML = `<i data-lucide="file-text" class="w-4 h-4 mr-2"></i> Generate Full Report`;
+                    btnReport.onclick = () => requestPcapReport(data.analysis_id);
+                    document.getElementById('pcapReportContainer').innerHTML = '';
+                    
+                    // Extract intrusions
+                    const newIntrusions = data.results
+                        .filter(r => r.result.is_intrusion)
+                        .map(r => r.result);
+                        
+                    // Merge and sort newest first
+                    state.allDetections = [...newIntrusions, ...state.allDetections]
+                        .sort((a,b) => new Date(b.timestamp || 0) - new Date(a.timestamp || 0));
+                    
+                    state.intrusions = state.allDetections.length;
+                    
+                    // Update UI
+                    updateOverviewKPIs();
+                    renderTables();
+                    
+                    // We don't auto-switch anymore so user can see the summary
+                } else {
+                    throw new Error(data.detail || "Unknown API Error");
+                }
+            } catch (err) {
+                console.error(err);
+                statusDiv.innerHTML = `<i data-lucide="x-circle" class="w-4 h-4 inline mr-1"></i> Error: ${err.message}`;
+                statusDiv.className = 'text-sm font-medium text-red-400';
+            } finally {
+                btn.disabled = false;
+                btn.classList.remove('opacity-50');
+                lucide.createIcons();
+            }
+        });
+
+        // --- RENDER KPI ---
+        function updateOverviewKPIs() {
+            document.getElementById('kpi-pcaps').innerText = state.pcapsAnalyzed;
+            document.getElementById('kpi-flows').innerText = state.totalFlows;
+            document.getElementById('kpi-intrusions').innerText = state.intrusions;
+            document.getElementById('kpi-benign').innerText = state.totalFlows - state.intrusions;
+            
+            let c=0, h=0, m=0, l=0;
+            let sml=0, ssig=0, sboth=0;
+            
+            state.allDetections.forEach(d => {
+                if (d.severity === 'CRITICAL') c++;
+                else if (d.severity === 'HIGH') h++;
+                else if (d.severity === 'MEDIUM') m++;
+                else l++;
+                
+                if (d.triggered_by === 'ML') sml++;
+                else if (d.triggered_by === 'SIGNATURE') ssig++;
+                else if (d.triggered_by === 'BOTH') sboth++;
+            });
+            
+            document.getElementById('kpi-crit').innerText = c;
+            document.getElementById('kpi-high').innerText = h;
+            document.getElementById('kpi-med').innerText = m;
+            document.getElementById('kpi-low').innerText = l;
+            
+            document.getElementById('kpi-src-ml').innerText = sml;
+            document.getElementById('kpi-src-sig').innerText = ssig;
+            document.getElementById('kpi-src-both').innerText = sboth;
+        }
+
+        // --- RENDER TABLES ---
+        function renderTables() {
+            renderOverviewTable();
+            renderIncidentsTable();
+        }
+
+        function buildRow(d) {
+            const time = d.flow_timestamp ? new Date(d.flow_timestamp).toLocaleTimeString() : (d.timestamp ? new Date(d.timestamp).toLocaleTimeString() : 'Unknown');
+            const src = `${d.src_ip}:${d.src_port || '*'}`;
+            const dst = `${d.dst_ip}:${d.dst_port || '*'}`;
+            const proto = d.protocol || 'TCP';
+            
+            const badge = `<span class="px-2 py-0.5 rounded text-[10px] font-bold uppercase ${getSevClass(d.severity)}">${d.severity}</span>`;
+            
+            const ml_html = d.ml_result && d.ml_result.verdict === 'ATTACK' 
+                ? '<span class="text-red-400 font-bold" title="ML: ATTACK">A</span>'
+                : '<span class="text-green-400 font-bold" title="ML: BENIGN">B</span>';
+                
+            const suri_html = d.suricata_result && d.suricata_result.verdict === 'ALERT'
+                ? '<span class="text-red-400 font-bold" title="Suricata: ALERT">A</span>'
+                : '<span class="text-green-400 font-bold" title="Suricata: BENIGN">B</span>';
+
+            const fusion = `<div class="flex items-center space-x-2 text-[10px] font-mono bg-slate-900 px-2 py-1 rounded border border-slate-700 w-fit">
+                <div>Sur: ${suri_html}</div><div class="text-slate-600">|</div><div>ML: ${ml_html}</div>
+            </div>`;
+            
+            return `
+                <tr class="hover:bg-slate-800/50 cursor-pointer" onclick="openDrawer('${d.detection_id}')">
+                    <td class="px-5 py-3">${time}</td>
+                    <td class="px-5 py-3 font-mono text-xs">${src} <span class="text-slate-600">→</span> ${dst}</td>
+                    <td class="px-5 py-3 text-xs">${proto}</td>
+                    <td class="px-5 py-3">${fusion}</td>
+                    <td class="px-5 py-3">${badge}</td>
+                    <td class="px-5 py-3 text-right">
+                        <button class="text-cyan-400 hover:text-cyan-300 text-xs font-medium bg-cyan-950/30 px-3 py-1 rounded border border-cyan-900/50">Investigate</button>
+                    </td>
+                </tr>
+            `;
+        }
+
+        function renderOverviewTable() {
+            const tbody = document.getElementById('overviewTableBody');
+            if (state.allDetections.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="6" class="px-5 py-8 text-center text-slate-500">No intrusions detected</td></tr>';
+                return;
+            }
+            tbody.innerHTML = state.allDetections.slice(0, 8).map(buildRow).join('');
+        }
+
+        function applyFilters() {
+            renderIncidentsTable();
+        }
+
+        function clearFilters() {
+            document.getElementById('filterSearch').value = '';
+            document.getElementById('filterSeverity').value = '';
+            document.getElementById('filterTrigger').value = '';
+            renderIncidentsTable();
+        }
+
+        function renderIncidentsTable() {
+            const tbody = document.getElementById('incidentsTableBody');
+            const search = document.getElementById('filterSearch').value.toLowerCase();
+            const sev = document.getElementById('filterSeverity').value;
+            const trig = document.getElementById('filterTrigger').value;
+            
+            const filtered = state.allDetections.filter(d => {
+                if (search && !(d.src_ip || "").toLowerCase().includes(search) && !(d.dst_ip || "").toLowerCase().includes(search)) return false;
+                if (sev && d.severity !== sev) return false;
+                if (trig && d.triggered_by !== trig) return false;
+                return true;
+            });
+            
+            document.getElementById('incidentsCount').innerText = `Showing ${filtered.length} of ${state.allDetections.length} incidents`;
+            
+            if (filtered.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="7" class="px-5 py-12 text-center text-slate-500">No incidents match filters</td></tr>';
+                return;
+            }
+            
+            tbody.innerHTML = filtered.map(d => {
+                const time = d.timestamp ? new Date(d.timestamp).toLocaleString() : 'Unknown';
+                const src = `${d.src_ip}:${d.src_port || '*'}`;
+                const dst = `${d.dst_ip}:${d.dst_port || '*'}`;
+                const badge = `<span class="px-2 py-0.5 rounded text-[10px] font-bold uppercase ${getSevClass(d.severity)}">${d.severity}</span>`;
+                
+                return `
+                <tr class="hover:bg-slate-800/50 cursor-pointer" onclick="openDrawer('${d.detection_id}')">
+                    <td class="px-5 py-3 text-xs text-slate-400">${time}</td>
+                    <td class="px-5 py-3 font-mono text-xs text-slate-300">${src}</td>
+                    <td class="px-5 py-3 font-mono text-xs text-slate-300">${dst}</td>
+                    <td class="px-5 py-3 text-xs">${d.protocol}</td>
+                    <td class="px-5 py-3 text-xs font-semibold text-slate-400">${d.triggered_by}</td>
+                    <td class="px-5 py-3">${badge}</td>
+                    <td class="px-5 py-3 text-right">
+                        <button class="text-cyan-400 hover:text-cyan-300 text-xs font-medium">Investigate</button>
+                    </td>
+                </tr>
+                `;
+            }).join('');
+        }
+
+        function renderReportsTable() {
+            const tbody = document.getElementById('reportsTableBody');
+            const repKeys = Object.keys(state.reports);
+            
+            if (repKeys.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="5" class="px-5 py-8 text-center text-slate-500">No reports generated yet</td></tr>';
+                return;
+            }
+            
+            tbody.innerHTML = repKeys.map(id => {
+                const r = state.reports[id];
+                let typeStr, targetStr, badge, action;
+                
+                if (r.analysis_id || id.startsWith('pcap-')) {
+                    // PCAP Report
+                    typeStr = `<i data-lucide="file-archive" class="w-3 h-3 inline mr-1"></i> PCAP: ${id.substring(0,10)}...`;
+                    targetStr = `All Traffic (${r.summary ? r.summary.flow_count : '?'} flows)`;
+                    const isMal = r.summary && r.summary.total_intrusions > 0;
+                    const verdict = isMal ? 'MALICIOUS' : 'BENIGN';
+                    const sClass = isMal ? 'bg-red-500/20 text-red-400' : 'bg-green-500/20 text-green-400';
+                    badge = `<span class="px-2 py-0.5 rounded text-[10px] font-bold uppercase ${sClass}">${verdict}</span>`;
+                    action = `openPcapDrawer('${id}')`;
+                } else {
+                    // Incident Report
+                    typeStr = `<i data-lucide="alert-triangle" class="w-3 h-3 inline mr-1 text-red-400"></i> ${id}`;
+                    targetStr = r.incident ? r.incident.dst_ip : 'Unknown';
+                    const sev = r.incident ? r.incident.severity : 'LOW';
+                    badge = `<span class="px-2 py-0.5 rounded text-[10px] font-bold uppercase ${getSevClass(sev)}">${sev}</span>`;
+                    action = `openDrawer('${id}')`;
+                }
+
+                return `
+                <tr class="hover:bg-slate-800/50">
+                    <td class="px-5 py-3 font-mono text-xs text-slate-400">${typeStr}</td>
+                    <td class="px-5 py-3 text-xs text-slate-300">${targetStr}</td>
+                    <td class="px-5 py-3">${badge}</td>
+                    <td class="px-5 py-3 text-xs text-green-400"><i data-lucide="check-circle" class="w-3 h-3 inline mr-1"></i> Ready</td>
+                    <td class="px-5 py-3 text-right">
+                        <button onclick="${action}" class="text-cyan-400 hover:text-cyan-300 text-xs font-medium">View</button>
+                    </td>
+                </tr>
+                `;
+            }).join('');
+            if(window.lucide) lucide.createIcons();
+        }
+
+        // --- CHARTS INSTANCES ---
+        let chOverviewActivity = null;
+        let chOverviewSev = null;
+        
+        let chAnaSrc = null;
+        let chAnaDst = null;
+        let chAnaProto = null;
+        let chAnaTrig = null;
+
+        function updateOverviewCharts() {
+            if (state.pcapsAnalyzed === 0) {
+                document.getElementById('overviewChartEmpty').innerText = "No PCAP analysis available. Analyze a PCAP to view results.";
+                document.getElementById('overviewChartEmpty').classList.remove('hidden');
+                document.getElementById('overviewActivityChart').classList.add('hidden');
+                document.getElementById('overviewSevEmpty').innerText = "No data";
+                document.getElementById('overviewSevEmpty').classList.remove('hidden');
+                document.getElementById('overviewSevChart').classList.add('hidden');
+                return;
+            }
+
+            if (state.allDetections.length === 0) {
+                // Analysis exists, but zero intrusions
+                document.getElementById('overviewChartEmpty').innerText = "No malicious activity detected in analyzed traffic.";
+                document.getElementById('overviewChartEmpty').classList.remove('hidden');
+                document.getElementById('overviewActivityChart').classList.add('hidden');
+                
+                document.getElementById('overviewSevEmpty').innerText = "No security alerts detected.";
+                document.getElementById('overviewSevEmpty').classList.remove('hidden');
+                document.getElementById('overviewSevChart').classList.add('hidden');
+                return;
+            }
+            
+            document.getElementById('overviewChartEmpty').classList.add('hidden');
+            document.getElementById('overviewActivityChart').classList.remove('hidden');
+            document.getElementById('overviewSevEmpty').classList.add('hidden');
+            document.getElementById('overviewSevChart').classList.remove('hidden');
+
+            // Activity (Bucket by hour or minute based on range, simplifed to just last 20)
+            const recent = [...state.allDetections].reverse().slice(-30);
+            const labels = recent.map(d => new Date(d.timestamp || 0).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}));
+            const data = recent.map(d => d.ml_confidence || 1.0);
+
+            if (chOverviewActivity) chOverviewActivity.destroy();
+            chOverviewActivity = new Chart(document.getElementById('overviewActivityChart'), {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'ML Confidence',
+                        data: data,
+                        borderColor: '#0ea5e9', // sky-500
+                        backgroundColor: 'rgba(14, 165, 233, 0.1)',
+                        borderWidth: 2,
+                        fill: true,
+                        tension: 0.4,
+                        pointRadius: 0
+                    }]
+                },
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, max: 1.0 } } }
+            });
+
+            // Severity Pie
+            let c=0, h=0, m=0, l=0;
+            state.allDetections.forEach(d => {
+                if (d.severity === 'CRITICAL') c++;
+                else if (d.severity === 'HIGH') h++;
+                else if (d.severity === 'MEDIUM') m++;
+                else l++;
+            });
+
+            if (chOverviewSev) chOverviewSev.destroy();
+            chOverviewSev = new Chart(document.getElementById('overviewSevChart'), {
+                type: 'doughnut',
+                data: {
+                    labels: ['Critical', 'High', 'Medium', 'Low'],
+                    datasets: [{
+                        data: [c, h, m, l],
+                        backgroundColor: ['#ef4444', '#f97316', '#eab308', '#22c55e'],
+                        borderWidth: 0
+                    }]
+                },
+                options: { responsive: true, maintainAspectRatio: false, cutout: '70%', plugins: { legend: { position: 'right', labels: { color: '#94a3b8' } } } }
+            });
+        }
+
+        function updateAnalyticsCharts() {
+            if (state.pcapsAnalyzed === 0 || !state.latestFlows || state.latestFlows.length === 0) {
+                document.getElementById('analyticsEmptyState').innerHTML = '<i data-lucide="pie-chart" class="w-12 h-12 mb-4 opacity-50"></i><p>No PCAP analysis data available to visualize.</p>';
+                document.getElementById('analyticsEmptyState').classList.remove('hidden');
+                document.getElementById('analyticsBenignBanner').classList.add('hidden');
+                document.getElementById('analyticsAttackBanner').classList.add('hidden');
+                document.getElementById('analyticsCharts').classList.add('hidden');
+                if (window.lucide) lucide.createIcons();
+                return;
+            }
+            
+            document.getElementById('analyticsEmptyState').classList.add('hidden');
+            document.getElementById('analyticsCharts').classList.remove('hidden');
+            document.getElementById('analyticsCharts').classList.add('grid');
+
+            const isMalicious = state.latestAnalysisSummary && state.latestAnalysisSummary.intrusions > 0;
+            
+            if (isMalicious) {
+                document.getElementById('analyticsAttackBanner').classList.remove('hidden');
+                document.getElementById('analyticsBenignBanner').classList.add('hidden');
+                document.getElementById('titleSrcIp').innerText = 'Top Attack Source IPs';
+                document.getElementById('titleDstIp').innerText = 'Top Target IPs';
+                document.getElementById('titleProto').innerText = 'Detected Attacks by Protocol';
+                document.getElementById('chartTriggerContainer').classList.remove('hidden');
+                document.getElementById('chartSevContainer').classList.remove('hidden');
+                document.getElementById('chartCategoryContainer').classList.remove('hidden');
+            } else {
+                document.getElementById('analyticsBenignBanner').classList.remove('hidden');
+                document.getElementById('analyticsAttackBanner').classList.add('hidden');
+                document.getElementById('titleSrcIp').innerText = 'Top Source IPs';
+                document.getElementById('titleDstIp').innerText = 'Top Destination IPs';
+                document.getElementById('titleProto').innerText = 'Protocol Distribution';
+                document.getElementById('chartTriggerContainer').classList.add('hidden');
+                document.getElementById('chartSevContainer').classList.add('hidden');
+                document.getElementById('chartCategoryContainer').classList.add('hidden');
+                document.getElementById('chartTimelineContainer').classList.add('hidden');
+            }
+
+            // Utils for counting
+            const countBy = (arr, key) => {
+                const c = {};
+                arr.forEach(i => {
+                   let val = i[key];
+                   if (val === undefined || val === null || val === '') val = 'Unknown';
+                   c[val] = (c[val] || 0) + 1;
+                });
+                return Object.entries(c).sort((a,b)=>b[1]-a[1]);
+            };
+
+            // Select data array to visualize
+            const dataToVisualize = isMalicious ? state.latestFlows.filter(f => f.is_intrusion) : state.latestFlows;
+
+            const srcCounts = countBy(dataToVisualize, 'src_ip').slice(0,5);
+            const dstCounts = countBy(dataToVisualize, 'dst_ip').slice(0,5);
+            const protoCounts = countBy(dataToVisualize, 'protocol');
+            
+            // Top Source IP Bar
+            if(chAnaSrc) chAnaSrc.destroy();
+            chAnaSrc = new Chart(document.getElementById('chartSrcIp'), {
+                type: 'bar',
+                data: {
+                    labels: srcCounts.map(x=>x[0]),
+                    datasets: [{ label: isMalicious ? 'Incidents' : 'Flows', data: srcCounts.map(x=>x[1]), backgroundColor: isMalicious ? '#ef4444' : '#3b82f6' }]
+                },
+                options: { responsive: true, maintainAspectRatio: false, indexAxis: 'y', plugins: { legend: { display: false } } }
+            });
+
+            // Top Dst IP Bar
+            if(chAnaDst) chAnaDst.destroy();
+            chAnaDst = new Chart(document.getElementById('chartDstIp'), {
+                type: 'bar',
+                data: {
+                    labels: dstCounts.map(x=>x[0]),
+                    datasets: [{ label: isMalicious ? 'Incidents' : 'Flows', data: dstCounts.map(x=>x[1]), backgroundColor: isMalicious ? '#f59e0b' : '#10b981' }]
+                },
+                options: { responsive: true, maintainAspectRatio: false, indexAxis: 'y', plugins: { legend: { display: false } } }
+            });
+
+            // Proto Doughnut
+            const protoMap = { 6: 'TCP', 17: 'UDP', 1: 'ICMP', 0: 'HOPOPT' };
+            if(chAnaProto) chAnaProto.destroy();
+            chAnaProto = new Chart(document.getElementById('chartProto'), {
+                type: 'doughnut',
+                data: {
+                    labels: protoCounts.map(x=> protoMap[x[0]] || x[0]),
+                    datasets: [{ data: protoCounts.map(x=>x[1]), backgroundColor: ['#8b5cf6', '#ec4899', '#14b8a6', '#f59e0b'], borderWidth:0 }]
+                },
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'right' } } }
+            });
+
+            if (isMalicious) {
+                // Trigger counts (ML Only, Signature Only, Hybrid)
+                const trigC = { 'ML Only': 0, 'Signature Only': 0, 'Hybrid': 0 };
+                dataToVisualize.forEach(f => {
+                    if (f.triggered_by === 'ML') trigC['ML Only']++;
+                    else if (f.triggered_by === 'SIGNATURE') trigC['Signature Only']++;
+                    else if (f.triggered_by === 'BOTH' || f.triggered_by === 'HYBRID') trigC['Hybrid']++;
+                });
+
+                if(chAnaTrig) chAnaTrig.destroy();
+                chAnaTrig = new Chart(document.getElementById('chartTrigger'), {
+                    type: 'pie',
+                    data: {
+                        labels: Object.keys(trigC),
+                        datasets: [{ data: Object.values(trigC), backgroundColor: ['#06b6d4', '#6366f1', '#a855f7'], borderWidth:0 }]
+                    },
+                    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'right' } } }
+                });
+
+                // Severity counts
+                const sevCounts = countBy(dataToVisualize, 'severity');
+                const sevColorMap = { 'CRITICAL': '#ef4444', 'HIGH': '#f97316', 'MEDIUM': '#f59e0b', 'LOW': '#3b82f6' };
+                // Ensure order
+                const sortedSevs = ['CRITICAL', 'HIGH', 'MEDIUM', 'LOW'];
+                const orderedSevCounts = sortedSevs.map(s => {
+                    const found = sevCounts.find(x => x[0] === s);
+                    return { label: s, count: found ? found[1] : 0, color: sevColorMap[s] };
+                });
+
+                if(window.chAnaSev) window.chAnaSev.destroy();
+                window.chAnaSev = new Chart(document.getElementById('chartSev'), {
+                    type: 'bar',
+                    data: {
+                        labels: orderedSevCounts.map(x=>x.label),
+                        datasets: [{ label: 'Incidents', data: orderedSevCounts.map(x=>x.count), backgroundColor: orderedSevCounts.map(x=>x.color) }]
+                    },
+                    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
+                });
+
+                // Categories logic
+                const catCounts = {};
+                dataToVisualize.forEach(f => {
+                    let cat = 'Unknown / Custom';
+                    if (f.signature) {
+                        if (f.signature.toLowerCase().includes('zerologon')) cat = 'Exploitation';
+                        else if (f.signature.toLowerCase().includes('psexec')) cat = 'Lateral Movement';
+                        else if (f.signature.toLowerCase().includes('scan') || f.signature.toLowerCase().includes('recon')) cat = 'Reconnaissance';
+                        else cat = 'Signature Match';
+                    } else if (f.triggered_by === 'ML') {
+                        cat = f.ml_prediction && f.ml_prediction !== 'BENIGN' ? f.ml_prediction : 'Volumetric Anomaly';
+                    }
+                    catCounts[cat] = (catCounts[cat] || 0) + 1;
+                });
+                const catSorted = Object.entries(catCounts).sort((a,b)=>b[1]-a[1]);
+
+                if(window.chAnaCat) window.chAnaCat.destroy();
+                window.chAnaCat = new Chart(document.getElementById('chartCategory'), {
+                    type: 'bar',
+                    data: {
+                        labels: catSorted.map(x=>x[0]),
+                        datasets: [{ label: 'Incidents', data: catSorted.map(x=>x[1]), backgroundColor: '#ec4899' }]
+                    },
+                    options: { responsive: true, maintainAspectRatio: false, indexAxis: 'y', plugins: { legend: { display: false } } }
+                });
+
+                // Timeline logic
+                document.getElementById('chartTimelineContainer').classList.remove('hidden');
+                
+                // Group by minute
+                const timeCounts = {};
+                dataToVisualize.forEach(f => {
+                    if (!f.flow_timestamp) return;
+                    let ts = new Date(f.flow_timestamp);
+                    if (isNaN(ts)) return;
+                    
+                    let minStr = ts.toISOString().substring(0, 16).replace('T', ' ');
+                    timeCounts[minStr] = (timeCounts[minStr] || 0) + 1;
+                });
+                
+                const timeSorted = Object.entries(timeCounts).sort((a,b)=> a[0].localeCompare(b[0]));
+                
+                if(window.chAnaTime) window.chAnaTime.destroy();
+                
+                if (timeSorted.length > 0) {
+                    window.chAnaTime = new Chart(document.getElementById('chartTimeline'), {
+                        type: 'line',
+                        data: {
+                            labels: timeSorted.map(x=>x[0]),
+                            datasets: [{ label: 'Attacks', data: timeSorted.map(x=>x[1]), borderColor: '#ef4444', backgroundColor: 'rgba(239, 68, 68, 0.2)', fill: true, tension: 0.3 }]
+                        },
+                        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true } } }
+                    });
+                } else {
+                    document.getElementById('chartTimelineContainer').classList.add('hidden');
+                }
+                
+            } else {
+                document.getElementById('chartTimelineContainer').classList.add('hidden');
+            }
+        }
+
+        // --- DRAWER & REPORT WORKFLOW ---
+        function openPcapDrawer(analysisId) {
+            const r = state.reports[analysisId];
+            if (!r) return;
+            
+            document.getElementById('incidentDrawer').classList.remove('hidden');
+            const content = document.getElementById('drawerContent');
+            
+            // Hide the incident report generation button since this is already a generated PCAP report
+            document.getElementById('btnGenerateReport').classList.add('hidden');
+            
+            let html = `
+                <div class="mb-6 border-b border-slate-800 pb-4">
+                    <h3 class="text-xl font-bold text-slate-100 flex items-center mb-2">
+                        <i data-lucide="file-text" class="w-5 h-5 mr-2 text-cyan-400"></i> PCAP Analysis Report
+                    </h3>
+                    <p class="text-sm text-slate-400">Analysis ID: <span class="font-mono text-xs">${analysisId}</span></p>
+                </div>
+                
+                <div class="bg-slate-850 border border-slate-700 rounded-lg p-5">
+                    <div class="markdown-body text-sm text-slate-300">
+                        ${marked.parse(r.gemini_report || '*No content generated*')}
+                    </div>
+                </div>
+            `;
+            
+            content.innerHTML = html;
+            if (window.lucide) lucide.createIcons();
+        }
+
+        function openDrawer(detId) {
+            state.currentDetectionId = detId;
+            const d = state.allDetections.find(x => x.detection_id === detId);
+            if (!d) return;
+
+            document.getElementById('incidentDrawer').classList.remove('hidden');
+            const content = document.getElementById('drawerContent');
+            
+            // Build base drawer content from cached detection metadata
+            const badge = `<span class="px-2 py-0.5 rounded text-xs font-bold uppercase ${getSevClass(d.severity)}">${d.severity}</span>`;
+            
+            let html = `
+                <div class="mb-6 flex justify-between items-start">
+                    <div>
+                        <h3 class="text-xl font-bold text-slate-100 flex items-center mb-2">Verdict: ${d.final_verdict || "INTRUSION"}</h3>
+                        <p class="text-sm text-slate-400">Detection ID: <span class="font-mono text-xs">${d.detection_id}</span></p>
+                        <p class="text-sm text-slate-400">Time: ${d.timestamp ? new Date(d.timestamp).toLocaleString() : 'Unknown'}</p>
+                    </div>
+                    <div class="text-right">
+                        ${badge}
+                        <p class="text-xs text-slate-400 mt-2">Triggered by: <strong class="text-slate-300">${d.triggered_by}</strong></p>
+                    </div>
+                </div>
+
+                <!-- Network Info -->
+                <div class="bg-slate-850 border border-slate-800 rounded-lg p-4 mb-6">
+                    <h4 class="text-xs font-bold text-slate-500 uppercase tracking-wider mb-3">Network Information</h4>
+                    <div class="grid grid-cols-2 gap-4 text-sm">
+                        <div><span class="text-slate-500 block mb-1">Source IP</span><span class="font-mono text-slate-200">${d.src_ip}</span></div>
+                        <div><span class="text-slate-500 block mb-1">Destination IP</span><span class="font-mono text-slate-200">${d.dst_ip}</span></div>
+                        <div><span class="text-slate-500 block mb-1">Source Port</span><span class="font-mono text-slate-200">${d.src_port || 'N/A'}</span></div>
+                        <div><span class="text-slate-500 block mb-1">Destination Port</span><span class="font-mono text-slate-200">${d.dst_port || 'N/A'}</span></div>
+                        <div><span class="text-slate-500 block mb-1">Protocol</span><span class="text-slate-200">${d.protocol || 'N/A'}</span></div>
+                    </div>
+                </div>
+            `;
+
+            // Setup report area container
+            html += `<div id="reportContainer"></div>`;
+            content.innerHTML = html;
+            
+            const btn = document.getElementById('btnGenerateReport');
+            
+            // Check if report already exists in state
+            if (state.reports[detId]) {
+                btn.classList.add('hidden');
+                renderReportData(state.reports[detId]);
+            } else {
+                // Attach event listener
+                btn.classList.remove('hidden');
+                btn.disabled = false;
+                btn.innerHTML = `<i data-lucide="file-text" class="w-4 h-4 mr-2"></i> Generate Hybrid Report`;
+                btn.onclick = () => requestReport(detId);
+                
+                // Show brief pre-report metadata
+                document.getElementById('reportContainer').innerHTML = `
+                    <div class="bg-slate-900/50 border border-slate-800 border-dashed rounded-lg p-8 text-center mt-6">
+                        <i data-lucide="brain-circuit" class="w-12 h-12 mx-auto text-slate-600 mb-4"></i>
+                        <h4 class="text-slate-300 font-medium mb-2">Deep Investigation Required</h4>
+                        <p class="text-sm text-slate-500 max-w-md mx-auto">Generate a full Hybrid Report to extract SHAP feature importance, Suricata rule details, and synthesize a SOC summary using Gemini AI.</p>
+                    </div>
+                `;
+                lucide.createIcons();
+            }
+        }
+
+        function closeDrawer() {
+            document.getElementById('incidentDrawer').classList.add('hidden');
+            state.currentDetectionId = null;
+        }
+
+        async function requestReport(detId) {
+            const btn = document.getElementById('btnGenerateReport');
+            const container = document.getElementById('reportContainer');
+            
+            btn.disabled = true;
+            btn.innerHTML = `<i data-lucide="loader" class="w-4 h-4 mr-2 animate-spin"></i> Generating...`;
+            lucide.createIcons();
+            
+            container.innerHTML = `
+                <div class="flex flex-col items-center justify-center p-12 text-cyan-500">
+                    <i data-lucide="loader" class="w-8 h-8 animate-spin mb-4"></i>
+                    <p class="font-medium animate-pulse">Generating hybrid security report...</p>
+                    <p class="text-xs text-slate-500 mt-2 text-center max-w-sm">Calculating SHAP feature attribution and communicating with Gemini API. This may take a few moments.</p>
+                </div>
+            `;
+            lucide.createIcons();
+            
+            try {
+                const res = await fetch(`/report/${detId}`, { method: 'POST' });
+                const data = await res.json();
+                
+                if (res.ok) {
+                    state.reports[detId] = data; // Cache
+                    btn.classList.add('hidden'); // Hide button
+                    renderReportData(data);
+                } else {
+                    throw new Error(data.detail || "API Error");
+                }
+            } catch (err) {
+                console.error(err);
+                container.innerHTML = `
+                    <div class="bg-red-950/30 border border-red-900 rounded-lg p-6 mt-6">
+                        <h4 class="text-red-400 font-medium flex items-center mb-2"><i data-lucide="alert-triangle" class="w-5 h-5 mr-2"></i> Report Generation Failed</h4>
+                        <p class="text-sm text-slate-400">Unable to generate the report. ${err.message}</p>
+                    </div>
+                `;
+                lucide.createIcons();
+                btn.disabled = false;
+                btn.innerHTML = `<i data-lucide="refresh-cw" class="w-4 h-4 mr-2"></i> Retry`;
+                lucide.createIcons();
+            }
+        }
+
+
+        async function requestPcapReport(analysisId) {
+            const btn = document.getElementById('btnGeneratePcapReport');
+            const container = document.getElementById('pcapReportContainer');
+            
+            btn.disabled = true;
+            btn.innerHTML = `<i data-lucide="loader" class="w-4 h-4 mr-2 animate-spin"></i> Generating...`;
+            lucide.createIcons();
+            
+            container.innerHTML = `
+                <div class="flex flex-col items-center justify-center p-8 border border-slate-800 rounded-lg bg-slate-900/30 text-cyan-500 mt-6">
+                    <i data-lucide="loader" class="w-8 h-8 animate-spin mb-4"></i>
+                    <p class="font-medium animate-pulse">Generating ZYDER SECURITY ANALYSIS REPORT...</p>
+                </div>
+            `;
+            lucide.createIcons();
+            
+            try {
+                const res = await fetch(`/report/pcap/${analysisId}`, { method: 'POST' });
+                const data = await res.json();
+                
+                if (res.ok) {
+                    state.reports[analysisId] = data;
+                    renderReportsTable();
+                    btn.classList.add('hidden');
+                    container.innerHTML = `
+                        <div class="bg-slate-850 border border-slate-700 rounded-lg p-6 mt-6 shadow-xl">
+                            <h4 class="text-sm font-bold text-cyan-400 uppercase tracking-wider mb-4 border-b border-slate-700 pb-2 flex items-center">
+                                <i data-lucide="file-text" class="w-4 h-4 mr-2"></i> ZYDER SECURITY ANALYSIS REPORT
+                            </h4>
+                            <div class="markdown-body text-sm text-slate-300">
+                                ${marked.parse(data.gemini_report || '*No content generated*')}
+                            </div>
+                        </div>
+                    `;
+                    lucide.createIcons();
+                } else {
+                    throw new Error(data.detail || "API Error");
+                }
+            } catch (err) {
+                console.error(err);
+                container.innerHTML = `
+                    <div class="bg-red-950/30 border border-red-900 rounded-lg p-6 mt-6">
+                        <h4 class="text-red-400 font-medium flex items-center mb-2"><i data-lucide="alert-triangle" class="w-5 h-5 mr-2"></i> Report Generation Failed</h4>
+                        <p class="text-sm text-slate-400">Unable to generate the report. ${err.message}</p>
+                    </div>
+                `;
+                lucide.createIcons();
+                btn.disabled = false;
+                btn.innerHTML = `<i data-lucide="refresh-cw" class="w-4 h-4 mr-2"></i> Retry`;
+                lucide.createIcons();
+            }
+        }
+
+        function renderReportData(data) {
+            const container = document.getElementById('reportContainer');
+            
+            // Build SHAP Bars
+            let shapHtml = '<p class="text-sm text-slate-500 mb-2">No SHAP data</p>';
+            if (data.shap_features && data.shap_features.length > 0) {
+                shapHtml = '<div class="space-y-3 mt-3">';
+                const maxAbs = Math.max(...data.shap_features.map(f => Math.abs(f.shap_value)));
+                
+                data.shap_features.forEach(f => {
+                    const pct = Math.min(100, Math.max(5, (Math.abs(f.shap_value) / maxAbs) * 100));
+                    const isAtt = f.direction === 'attack';
+                    const color = isAtt ? 'bg-red-500' : 'bg-green-500';
+                    const textCol = isAtt ? 'text-red-400' : 'text-green-400';
+                    
+                    shapHtml += `
+                        <div>
+                            <div class="flex justify-between text-xs mb-1">
+                                <span class="text-slate-300 truncate w-48">${f.name}</span>
+                                <span class="${textCol} font-mono">${f.shap_value > 0 ? '+' : ''}${f.shap_value.toFixed(4)}</span>
+                            </div>
+                            <div class="w-full bg-slate-800 rounded-full h-1.5 flex ${isAtt ? 'justify-end' : 'justify-start'} overflow-hidden">
+                                <div class="${color} h-1.5 rounded-full" style="width: ${pct}%"></div>
+                            </div>
+                        </div>
+                    `;
+                });
+                shapHtml += '</div>';
+            }
+
+            // Build HTML
+            const sigSevBadge = `<span class="px-2 py-0.5 rounded text-[10px] font-bold uppercase ${getSevClass(data.signature_analysis.severity)}">${data.signature_analysis.severity}</span>`;
+            
+            const html = `
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                    <!-- ML Analysis -->
+                    <div class="bg-slate-850 border border-slate-800 rounded-lg p-4 flex flex-col">
+                        <h4 class="text-xs font-bold text-slate-500 uppercase tracking-wider mb-4 border-b border-slate-800 pb-2">ML Analysis (XGBoost)</h4>
+                        <div class="flex justify-between items-center mb-4">
+                            <span class="text-sm text-slate-400">Prediction:</span>
+                            <span class="font-bold text-slate-200">${data.ml_analysis.prediction}</span>
+                        </div>
+                        <div class="flex justify-between items-center mb-4">
+                            <span class="text-sm text-slate-400">Confidence:</span>
+                            <span class="font-mono text-cyan-400 bg-cyan-950/50 px-2 py-1 rounded">${(data.ml_analysis.confidence * 100).toFixed(1)}%</span>
+                        </div>
+                        <h5 class="text-[10px] font-bold text-slate-500 uppercase mt-2 mb-2">SHAP Feature Importance</h5>
+                        <div class="flex-1 bg-slate-900 rounded p-3">
+                            ${shapHtml}
+                        </div>
+                    </div>
+                    
+                    <!-- Suricata -->
+                    <div class="bg-slate-850 border border-slate-800 rounded-lg p-4">
+                        <h4 class="text-xs font-bold text-slate-500 uppercase tracking-wider mb-4 border-b border-slate-800 pb-2">Signature Analysis (Suricata)</h4>
+                        <div class="space-y-4 text-sm">
+                            <div class="flex justify-between items-center">
+                                <span class="text-slate-400">Matched:</span>
+                                <span class="${data.signature_analysis.matched ? 'text-red-400' : 'text-slate-500'} font-bold">${data.signature_analysis.matched ? 'YES' : 'NO'}</span>
+                            </div>
+                            <div class="flex justify-between items-center">
+                                <span class="text-slate-400">Severity:</span>
+                                ${sigSevBadge}
+                            </div>
+                            <div>
+                                <span class="text-slate-400 block mb-1">Rule / Signature:</span>
+                                <div class="bg-slate-900 p-2 rounded border border-slate-800 font-mono text-xs text-slate-300 break-words">
+                                    ${data.signature_analysis.signature || 'None'}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Gemini Report -->
+                <div class="bg-slate-850 border border-slate-800 rounded-lg p-5">
+                    <h4 class="text-xs font-bold text-cyan-500 uppercase tracking-wider mb-4 flex items-center border-b border-slate-800 pb-2">
+                        <i data-lucide="sparkles" class="w-4 h-4 mr-2"></i> Gemini SOC Synthesis
+                    </h4>
+                    <div class="markdown-body text-sm">
+                        ${marked.parse(data.gemini_report || '*No content generated*')}
+                    </div>
+                </div>
+            `;
+            
+            container.innerHTML = html;
+            lucide.createIcons();
+        }
+    </script>
+</body>
+</html>
