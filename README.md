@@ -57,19 +57,33 @@ flowchart TD
 
 ---
 
-## 🛠️ Technology Stack
+## 🛠️ Tech Stack
 
-**Language:** Python 3.13.0
-**Backend:** FastAPI
-**ML:** XGBoost · Scikit-learn
-**Network:** CICFlowMeter · Zeek · Scapy · Suricata
-**Explainability:** SHAP
-**GenAI:** Google Gemini
-**Frontend:** HTML · JavaScript · TailwindCSS · Chart.js
-**Datasets:** CICIDS2017 · UNSW-NB15
+### Core
+![Python](https://img.shields.io/badge/Python%203.13-3776AB?style=for-the-badge&logo=python&logoColor=white)
+![FastAPI](https://img.shields.io/badge/FastAPI-009688?style=for-the-badge&logo=fastapi&logoColor=white)
+![XGBoost](https://img.shields.io/badge/XGBoost-189C75?style=for-the-badge&logo=xgboost&logoColor=white)
+![Scikit-learn](https://img.shields.io/badge/Scikit--learn-F7931E?style=for-the-badge&logo=scikit-learn&logoColor=white)
 
----
+### Network Security
+![CICFlowMeter](https://img.shields.io/badge/CICFlowMeter-333333?style=for-the-badge)
+![Zeek](https://img.shields.io/badge/Zeek-4D9DE0?style=for-the-badge&logo=zeek&logoColor=white)
+![Scapy](https://img.shields.io/badge/Scapy-1679A7?style=for-the-badge&logo=python&logoColor=white)
+![Suricata](https://img.shields.io/badge/Suricata-EF3B2D?style=for-the-badge)
 
+### Explainability & GenAI
+![SHAP](https://img.shields.io/badge/SHAP-8A2BE2?style=for-the-badge)
+![Google Gemini](https://img.shields.io/badge/Gemini-8E75B2?style=for-the-badge&logo=google-gemini&logoColor=white)
+
+### Frontend
+![HTML5](https://img.shields.io/badge/HTML5-E34F26?style=for-the-badge&logo=html5&logoColor=white)
+![JavaScript](https://img.shields.io/badge/JavaScript-F7DF1E?style=for-the-badge&logo=javascript&logoColor=black)
+![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-06B6D4?style=for-the-badge&logo=tailwindcss&logoColor=white)
+![Chart.js](https://img.shields.io/badge/Chart.js-FF6384?style=for-the-badge&logo=chartdotjs&logoColor=white)
+
+### Datasets
+![CICIDS2017](https://img.shields.io/badge/CICIDS2017-111827?style=for-the-badge)
+![UNSW-NB15](https://img.shields.io/badge/UNSW--NB15-111827?style=for-the-badge)
 ## 📂 Project Structure
 
 ```text
